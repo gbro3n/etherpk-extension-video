@@ -184,6 +184,11 @@ export function createVideoWidget(services: VideoServices): FenceWidget {
                 image.alt = ''
                 image.decoding = 'async'
                 image.referrerPolicy = 'no-referrer'
+                // A picture that will not load leaves the plain card, not a broken image.
+                image.addEventListener('error', () => {
+                    image.remove()
+                    poster.classList.remove('video-poster--picture')
+                })
                 image.src = src
                 poster.classList.add('video-poster--picture')
                 poster.prepend(image)
@@ -199,9 +204,11 @@ export function createVideoWidget(services: VideoServices): FenceWidget {
                 player.focus()
             }
 
-            // The column's width, for the player's size: a change re-measures every video. The work
-            // waits for the next frame, since telling the editor a height changed resizes the hosts
-            // this observes, which inside the callback would be a loop the browser reports as an error.
+            // The column's width, for the block's height: a change tells the editor to ask every
+            // video's height again. The card itself follows the width through CSS, so it is not drawn
+            // again, which would take the keyboard's focus from it. The work waits for the next frame,
+            // since telling the editor a height changed resizes the hosts this observes, which inside
+            // the callback would be a loop the browser reports as an error.
             let frame = 0
             const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver((entries) => {
                 const width = Math.round(entries[0]?.contentRect.width ?? 0)
@@ -210,7 +217,6 @@ export function createVideoWidget(services: VideoServices): FenceWidget {
                 frame = requestAnimationFrame(() => {
                     column = width
                     for (const other of mounted) other.resized()
-                    if (!playing) draw()
                 })
             })
             observer?.observe(host)

@@ -111,7 +111,7 @@ test.describe('a video in a document', () => {
     test('a Short is drawn upright', async ({ page }) => {
         await setDoc(page, ['Garden', video(SHORT), 'After'].join('\n'))
         await expect(page.getByRole('link', { name: 'Open the Short on YouTube' })).toHaveAttribute('href', SHORT)
-        // Measured once it has settled: a card draws again when it learns the column's width.
+        // Measured once it has settled: the editor sizes the block again when it learns the column's width.
         await expect
             .poll(async () => {
                 const box = await page.getByTestId('video-play').boundingBox()
@@ -133,12 +133,16 @@ test.describe('a video in a document', () => {
         const edit = page.getByTestId('video-edit-link')
         const remove = page.getByTestId('video-delete')
         await expect(remove).toBeVisible()
-        const [a, b, c] = [(await open.boundingBox())!, (await edit.boundingBox())!, (await remove.boundingBox())!]
-        // One row, left to right, each a short step from the last.
-        expect(Math.abs(a.y + a.height / 2 - (b.y + b.height / 2))).toBeLessThan(4)
-        expect(Math.abs(b.y + b.height / 2 - (c.y + c.height / 2))).toBeLessThan(4)
-        expect(b.x - (a.x + a.width)).toBeLessThan(24)
-        expect(c.x - (b.x + b.width)).toBeLessThan(24)
+        // One row, left to right, each a short step from the last. Measured once it has settled: a card
+        // is sized again when it learns the column's width.
+        await expect
+            .poll(async () => {
+                const [a, b, c] = await Promise.all([open.boundingBox(), edit.boundingBox(), remove.boundingBox()])
+                if (!a || !b || !c) return 'not drawn'
+                const middle = (box: { y: number; height: number }) => box.y + box.height / 2
+                return Math.abs(middle(a) - middle(b)) < 4 && Math.abs(middle(b) - middle(c)) < 4 && b.x - (a.x + a.width) < 24 && c.x - (b.x + b.width) < 24 && b.x > a.x && c.x > b.x
+            })
+            .toBe(true)
     })
 
     test('Edit link shows the link as text in the editor', async ({ page }) => {
