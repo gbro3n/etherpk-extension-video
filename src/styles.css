@@ -123,6 +123,30 @@
     text-underline-offset: 2px;
 }
 
+/* Edit link and Delete: quieter than the link, as text the size of the caption. */
+.video-action {
+    border: 0;
+    border-radius: 0.25rem;
+    padding: 0.25rem 0.375rem;
+    margin: 0 -0.375rem;
+    background: transparent;
+    color: var(--gk-text-muted, #6b7280);
+    font: inherit;
+    cursor: pointer;
+    transition: color 120ms ease-out, background-color 120ms ease-out;
+}
+
+.video-action:hover {
+    color: var(--gk-text-default, inherit);
+    background: var(--gk-surface-2, rgba(0, 0, 0, 0.06));
+}
+
+.video-action:focus-visible,
+.video-open:focus-visible {
+    outline: 2px solid var(--gk-accent, #2563eb);
+    outline-offset: 2px;
+}
+
 .video--message {
     flex-direction: row;
     align-items: center;
@@ -154,7 +178,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .video-play-icon {
+    .video-play-icon,
+    .video-action {
         transition: none;
     }
 }

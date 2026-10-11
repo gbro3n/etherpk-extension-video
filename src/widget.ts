@@ -7,9 +7,11 @@
  * player, in a frame the Client builds (`context.embeds.frame`, ADR 0135), and the keyboard moves
  * into it.
  *
- * Under the video, never over it (YouTube forbids anything drawn over its player), a caption names
- * the provider and links to the video's own page, which still works when a player refuses to play
- * (a Vimeo video limited to its owner's sites, a video taken down).
+ * Under the video, never over it (YouTube forbids anything drawn over its player), a caption links
+ * to the video's own page, which still works when a player refuses to play (a Vimeo video limited to
+ * its owner's sites, a video taken down). Where the document can be written, the caption also offers
+ * the link as text and deleting the video. A delete is one editor change, so the notice it shows
+ * says how to undo it rather than asking first.
  */
 import type { FenceContext, FenceInfo, FenceWidget, MountedFence } from '@appsoftwareltd/etherpk-extension-api'
 
@@ -25,6 +27,8 @@ export interface VideoServices {
     details(link: VideoLink): Promise<{ title?: string; thumbnail?: string } | null>
     /** A frame for the player, which the Client builds. */
     frame(options: { src: string; title: string }): HTMLIFrameElement
+    /** Tell the person something the page does not show, such as how to undo a delete. */
+    notify(message: string): void
 }
 
 /** The caption row under a video. */
@@ -129,12 +133,7 @@ export function createVideoWidget(services: VideoServices): FenceWidget {
                 frame.append(poster)
 
                 const caption = element('figcaption', 'video-caption')
-                caption.append(element('span', 'video-provider', video.short ? `${name} Short` : name))
-                const open = element('a', 'video-open', `Open on ${name}`)
-                open.href = video.page
-                open.target = '_blank'
-                open.rel = 'noopener'
-                caption.append(open)
+                drawCaption(caption, video, name)
                 root.append(frame, caption)
 
                 if (services.thumbnails()) {
@@ -150,6 +149,34 @@ export function createVideoWidget(services: VideoServices): FenceWidget {
                     })
                 }
                 if (context.takeFocus()) poster.focus()
+            }
+
+            /**
+             * The row under the video: its own page, then, while the document can be written, the
+             * link as text and deleting the video. Drawn again when that changes, without touching the
+             * player above it.
+             */
+            let captionWritable = false
+            const drawCaption = (caption: HTMLElement, video: VideoLink, name: string) => {
+                captionWritable = context.writable
+                const open = element('a', 'video-open', video.short ? `Open the Short on ${name}` : `Open on ${name}`)
+                open.href = video.page
+                open.target = '_blank'
+                open.rel = 'noopener'
+                caption.replaceChildren(open)
+                if (!captionWritable) return
+                const edit = element('button', 'video-action', 'Edit link')
+                edit.type = 'button'
+                edit.dataset.testid = 'video-edit-link'
+                edit.addEventListener('click', () => context.editAsText())
+                const remove = element('button', 'video-action', 'Delete')
+                remove.type = 'button'
+                remove.dataset.testid = 'video-delete'
+                remove.setAttribute('aria-label', `Delete the ${name} video`)
+                remove.addEventListener('click', () => {
+                    if (context.remove()) services.notify('Video deleted. Press Ctrl+Z (Cmd+Z on a Mac) in the document to bring it back.')
+                })
+                caption.append(edit, remove)
             }
 
             const showThumbnail = (poster: HTMLElement, src: string) => {
@@ -200,7 +227,12 @@ export function createVideoWidget(services: VideoServices): FenceWidget {
                     context = next
                     const after = linkOf(next)
                     // Only a change of video draws again: a playing video keeps playing through any other.
-                    if (before?.embed !== after?.embed) draw()
+                    if (before?.embed !== after?.embed) {
+                        draw()
+                        return
+                    }
+                    const caption = root.querySelector<HTMLElement>('.video-caption')
+                    if (after && caption && next.writable !== captionWritable) drawCaption(caption, after, providerName(after.provider))
                 },
                 destroy() {
                     mounted.delete(context)

@@ -110,7 +110,7 @@ test.describe('a video in a document', () => {
 
     test('a Short is drawn upright', async ({ page }) => {
         await setDoc(page, ['Garden', video(SHORT), 'After'].join('\n'))
-        await expect(page.getByText('YouTube Short')).toBeVisible()
+        await expect(page.getByRole('link', { name: 'Open the Short on YouTube' })).toHaveAttribute('href', SHORT)
         // Measured once it has settled: a card draws again when it learns the column's width.
         await expect
             .poll(async () => {
@@ -125,6 +125,42 @@ test.describe('a video in a document', () => {
         await expect(page.getByText("This isn't a link to a YouTube or Vimeo video.")).toBeVisible()
         await page.getByRole('button', { name: 'Edit link' }).click()
         await expect(page.locator('.cm-line', { hasText: 'https://example.com/garden' })).toBeVisible()
+    })
+
+    test('the caption sits close under the video: its page, Edit link and Delete in one row', async ({ page }) => {
+        await setDoc(page, ['Garden', video(WATCH), 'After'].join('\n'))
+        const open = page.getByRole('link', { name: 'Open on YouTube' })
+        const edit = page.getByTestId('video-edit-link')
+        const remove = page.getByTestId('video-delete')
+        await expect(remove).toBeVisible()
+        const [a, b, c] = [(await open.boundingBox())!, (await edit.boundingBox())!, (await remove.boundingBox())!]
+        // One row, left to right, each a short step from the last.
+        expect(Math.abs(a.y + a.height / 2 - (b.y + b.height / 2))).toBeLessThan(4)
+        expect(Math.abs(b.y + b.height / 2 - (c.y + c.height / 2))).toBeLessThan(4)
+        expect(b.x - (a.x + a.width)).toBeLessThan(24)
+        expect(c.x - (b.x + b.width)).toBeLessThan(24)
+    })
+
+    test('Edit link shows the link as text in the editor', async ({ page }) => {
+        await setDoc(page, ['Garden', video(WATCH), 'After'].join('\n'))
+        await page.getByTestId('video-edit-link').click()
+        await expect(page.locator('.cm-line', { hasText: WATCH })).toBeVisible()
+        await expect(page.getByTestId('video-play')).toHaveCount(0)
+    })
+
+    test('Delete removes the video at once, says how to undo it, and Mod+Z brings it back', async ({ page }) => {
+        // The harness writes the Client's notices to the console rather than drawing them.
+        const notices: string[] = []
+        page.on('console', (message) => notices.push(message.text()))
+        await setDoc(page, ['Garden', video(WATCH), 'After'].join('\n'))
+        await page.getByTestId('video-delete').click()
+        await expect.poll(() => getDoc(page)).toBe('Garden\nAfter')
+        await expect.poll(() => notices).toContain('Video deleted. Press Ctrl+Z (Cmd+Z on a Mac) in the document to bring it back.')
+
+        await page.getByTestId('document-editor').locator('.cm-content').focus()
+        await page.keyboard.press('Control+z')
+        await expect.poll(() => getDoc(page)).toBe(['Garden', video(WATCH), 'After'].join('\n'))
+        await expect(page.getByTestId('video-play')).toBeVisible()
     })
 
     test('/video asks for a link, says when it is not a video, and puts the video at the caret', async ({ page }) => {

@@ -17,6 +17,9 @@ Published by `gbro3n`. This is not an extension from App Software, the makers of
   until you press play. YouTube videos play from `youtube-nocookie.com`.
 - **Open the video's own page.** Under every video, a link opens it on YouTube or Vimeo. Use it when
   a video won't play in the document. Some Vimeo videos play only on sites their owner chose.
+- **Edit link and Delete.** Beside that link, **Edit link** shows the block as text so you can change
+  the link, and **Delete** removes the video. Press Mod+Z in the document to bring a deleted video
+  back.
 - **Published sites.** On a site you publish from EtherPK, a video is its picture and title linking
   to the video's page. The site holds no player.
 

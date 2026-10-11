@@ -14,7 +14,7 @@
  *
  * - a widget over each `video` fence (`context.editor.registerFence`), drawn as a card until the
  *   person presses play (`widget.ts`);
- * - a link pasted alone on an empty line becomes a video (the registration's `fromLink`), and Mod+Z
+ * - a video link pasted on its own becomes a video (the registration's `fromPaste`), and Mod+Z
  *   straight after turns it back into the link;
  * - `/video`, which asks for a link in a dialog the Client draws (`context.dialogs.prompt`) and puts
  *   the video at the caret (`context.editor.insertBlock`);
@@ -43,10 +43,15 @@ export function activate(context: ExtensionContext): void {
             subscribeSettings: (listener) => context.settings.subscribe(listener),
             details,
             frame: (options) => context.embeds.frame(options),
+            notify: (message) => context.notify(message),
         }),
         {
             title: 'Video',
-            fromLink: (url) => parseVideoLink(url) !== null,
+            // A video link pasted on its own, with nothing else, becomes the video.
+            fromPaste: (text) => {
+                const link = text.trim()
+                return parseVideoLink(link) ? [link] : null
+            },
             async publish(fence) {
                 const link = parseVideoLink(fence.body.find((line) => line.trim() !== '') ?? '')
                 if (!link) return null
