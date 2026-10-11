@@ -4,7 +4,7 @@
  * Nothing reaches YouTube or Vimeo until the person presses play. Before that the block is a card:
  * the video's picture and title when the Show video thumbnails setting is on (fetched once per
  * video and kept on the device), a plain card when it is off. Pressing play swaps the card for the
- * player, in a frame the Client builds (`context.embeds.frame`, ADR 0135), and the keyboard moves
+ * player, in a frame the Client builds (`context.embeds.frame`), and the keyboard moves
  * into it.
  *
  * Under the video, never over it (YouTube forbids anything drawn over its player), a caption links
