@@ -1,0 +1,54 @@
+{
+    "name": "@gbro3n/etherpk-extension-video",
+    "version": "0.1.0",
+    "description": "YouTube and Vimeo videos in EtherPK documents: paste a link on a line of its own, or use /video, and the video plays in the document.",
+    "license": "MIT",
+    "type": "module",
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/gbro3n/etherpk-extension-video.git"
+    },
+    "files": [
+        "dist",
+        "LICENSE",
+        "README.md"
+    ],
+    "etherpk": {
+        "id": "video",
+        "displayName": "Videos",
+        "publisher": "gbro3n",
+        "minClientVersion": "0.9.5",
+        "main": "./dist/main.js",
+        "styles": [
+            "./dist/main.css"
+        ],
+        "icons": {
+            "video": "<rect x=\"1.75\" y=\"3.25\" width=\"12.5\" height=\"9.5\" rx=\"2\"/><path d=\"M6.75 6v4l3.5-2z\"/>"
+        },
+        "settings": [
+            {
+                "id": "thumbnails",
+                "type": "boolean",
+                "default": true,
+                "title": "Show video thumbnails",
+                "description": "Before a video plays, show its picture and title from YouTube or Vimeo. Fetching them tells YouTube or Vimeo your IP address and which video is in your notes. Turn this off to show a plain card instead, and nothing is sent until you press play."
+            }
+        ]
+    },
+    "scripts": {
+        "build": "vite build",
+        "dev": "vite build --watch",
+        "check": "tsc --noEmit",
+        "test": "vitest run",
+        "test:e2e": "playwright test"
+    },
+    "devDependencies": {
+        "@appsoftwareltd/etherpk-extension-api": "link:../etherpk-worktrees/community-extensions/packages/extension-api",
+        "@playwright/test": "^1.59.1",
+        "@types/node": "^25.9.9",
+        "typescript": "^6.0.2",
+        "vite": "^8.0.16",
+        "vitest": "^4.1.11"
+    },
+    "packageManager": "pnpm@11.5.3"
+}
