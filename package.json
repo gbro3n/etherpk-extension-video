@@ -17,7 +17,7 @@
         "id": "video",
         "displayName": "Videos",
         "publisher": "gbro3n",
-        "minClientVersion": "0.9.5",
+        "minClientVersion": "0.10.0",
         "main": "./dist/main.js",
         "styles": [
             "./dist/main.css"
@@ -36,6 +36,7 @@
         ]
     },
     "scripts": {
+        "prepublishOnly": "pnpm run build",
         "build": "vite build",
         "dev": "vite build --watch",
         "check": "tsc --noEmit",
@@ -43,7 +44,7 @@
         "test:e2e": "playwright test"
     },
     "devDependencies": {
-        "@appsoftwareltd/etherpk-extension-api": "link:../etherpk-worktrees/community-extensions/packages/extension-api",
+        "@appsoftwareltd/etherpk-extension-api": "^0.10.0",
         "@playwright/test": "^1.59.1",
         "@types/node": "^25.9.9",
         "typescript": "^6.0.2",
