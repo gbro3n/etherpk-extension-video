@@ -204,3 +204,82 @@ test('on a narrow screen a video is as wide as the column, never wider, and /vid
     await page.keyboard.type('/video')
     await expect(page.getByRole('option', { name: /^Video/ })).toBeVisible()
 })
+
+/** A graph in the browser's private storage, opened at `concept`. */
+async function openGraph(page: Page, id: string, pages: Record<string, string>, concept: string) {
+    await page.goto('/dev/filesystem')
+    await page.evaluate(
+        async ({ id, pages }) => {
+            const root = await navigator.storage.getDirectory()
+            await root.removeEntry(`graph-${id}`, { recursive: true }).catch(() => {})
+            const graph = await root.getDirectoryHandle(`graph-${id}`, { create: true })
+            for (const sub of ['journals', 'pages', 'assets', 'etherpk']) await graph.getDirectoryHandle(sub, { create: true })
+            const folder = await graph.getDirectoryHandle('pages')
+            for (const [name, text] of Object.entries(pages)) {
+                const writable = await (await folder.getFileHandle(`${name}.md`, { create: true })).createWritable()
+                await writable.write(text)
+                await writable.close()
+            }
+        },
+        { id, pages },
+    )
+    await openDocument(page, id, concept)
+}
+
+async function openDocument(page: Page, id: string, concept: string) {
+    await page.goto(`/g/${id}/d/${encodeURIComponent(concept)}?fs=opfs&autosaveMs=150`)
+    await expect(page.locator(`[data-doc-target="${concept}"] .cm-content`)).toBeVisible({ timeout: 30_000 })
+}
+
+test.describe("a video in a document's backlinks", () => {
+    // A video under a bullet that names Kitchen, so Kitchen's backlinks quote it.
+    const PAGES = { Kitchen: 'The kitchen garden.\n', Walks: ['- [[Kitchen]] the walk we filmed', '  ```video', `  ${WATCH}`, '  ```', ''].join('\n'), Notes: 'Nothing here.\n' }
+
+    test("is a link to the video's page with its title and picture, opening in a new tab", async ({ page }) => {
+        await answerProviders(page)
+        await openGraph(page, 'video-backlinks', PAGES, 'Kitchen')
+        const backlinks = page.locator('[data-doc-target="Kitchen"]').getByTestId('document-backlinks')
+        const link = backlinks.getByTestId('reference-fence-link')
+        await expect(link).toBeVisible({ timeout: 30_000 })
+        await expect(link).toHaveText('A walk round the garden (YouTube)')
+        await expect(link).toHaveAttribute('href', WATCH)
+        await expect(link).toHaveAttribute('target', '_blank')
+        await expect(link.getByRole('img', { name: 'A walk round the garden' })).toHaveAttribute('src', `https://i.ytimg.com/vi/${ID}/hqdefault.jpg`)
+        await expect(backlinks.getByTestId('reference-code')).toHaveCount(0)
+    })
+
+    test('turning Show video thumbnails off takes the picture and title away from backlinks already showing', async ({ page }) => {
+        await answerProviders(page)
+        await openGraph(page, 'video-backlinks-live', PAGES, 'Kitchen')
+        const link = page.locator('[data-doc-target="Kitchen"]').getByTestId('document-backlinks').getByTestId('reference-fence-link')
+        await expect(link.getByRole('img')).toBeVisible({ timeout: 30_000 })
+        await page.getByTestId('ws-graph-settings').click()
+        await page.getByTestId('settings-area-extensions').click()
+        const row = page.locator('[data-testid="extension-row"][data-extension="video"]')
+        await row.getByTestId('extension-settings').locator('summary').click()
+        await row.locator('[data-testid="extension-setting"][data-setting="thumbnails"]').getByTestId('extension-setting-switch').uncheck()
+        await page.keyboard.press('Escape')
+        await expect(link).toHaveText('Watch on YouTube', { timeout: 10_000 })
+        await expect(link.getByRole('img')).toHaveCount(0)
+    })
+
+    test('with Show video thumbnails off, is the link alone, and asks nothing of YouTube', async ({ page }) => {
+        const asked = await answerProviders(page)
+        await openGraph(page, 'video-backlinks-plain', PAGES, 'Notes')
+        await page.getByTestId('ws-graph-settings').click()
+        await page.getByTestId('settings-area-extensions').click()
+        const row = page.locator('[data-testid="extension-row"][data-extension="video"]')
+        await row.getByTestId('extension-settings').locator('summary').click()
+        const thumbnails = row.locator('[data-testid="extension-setting"][data-setting="thumbnails"]').getByTestId('extension-setting-switch')
+        await thumbnails.uncheck()
+        await expect(thumbnails).not.toBeChecked()
+
+        await openDocument(page, 'video-backlinks-plain', 'Kitchen')
+        const link = page.locator('[data-doc-target="Kitchen"]').getByTestId('document-backlinks').getByTestId('reference-fence-link')
+        await expect(link).toBeVisible({ timeout: 30_000 })
+        await expect(link).toHaveText('Watch on YouTube')
+        await expect(link).toHaveAttribute('href', WATCH)
+        await expect(link.getByRole('img')).toHaveCount(0)
+        expect(asked).toEqual([])
+    })
+})

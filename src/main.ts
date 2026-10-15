@@ -19,9 +19,12 @@
  * - `/video`, which asks for a link in a dialog the Client draws (`context.dialogs.prompt`) and puts
  *   the video at the caret (`context.editor.insertBlock`);
  * - on a published site, a video is its picture and title linking to the video's page, with no
- *   player (the registration's `publish`).
+ *   player (the registration's `publish`);
+ * - where a reference quotes the video, in the Backlinks panel and beneath a document, the same link,
+ *   with the picture and title only while the Show video thumbnails setting is on (the
+ *   registration's `quote`).
  */
-import type { ExtensionContext } from '@appsoftwareltd/etherpk-extension-api'
+import type { ExtensionContext, PublishedFence } from '@appsoftwareltd/etherpk-extension-api'
 
 import { createDetails } from './details'
 import { parseVideoLink, providerName } from './links'
@@ -35,6 +38,25 @@ const THUMBNAILS = 'thumbnails'
 export function activate(context: ExtensionContext): void {
     const details = createDetails(context.storage)
     const thumbnails = () => context.settings.get(THUMBNAILS) !== 'false'
+
+    /**
+     * A video as a link to its page, for a published site and for a quote of it: with its picture and
+     * title when `withDetails`, which fetches them the first time, and otherwise the link alone.
+     */
+    async function videoCard(body: readonly string[], withDetails: boolean): Promise<PublishedFence | null> {
+        const link = parseVideoLink(body.find((line) => line.trim() !== '') ?? '')
+        if (!link) return null
+        const name = providerName(link.provider)
+        if (!withDetails) return { kind: 'link', href: link.page, text: `Watch on ${name}` }
+        const known = await details(link)
+        const thumbnail = link.provider === 'youtube' ? `https://i.ytimg.com/vi/${link.id}/hqdefault.jpg` : known?.thumbnail
+        return {
+            kind: 'link',
+            href: link.page,
+            text: known?.title ? `${known.title} (${name})` : `Watch on ${name}`,
+            ...(thumbnail ? { image: { src: thumbnail, alt: known?.title ?? `${name} video` } } : {}),
+        }
+    }
 
     context.editor.registerFence(
         VIDEO_FENCE,
@@ -52,19 +74,10 @@ export function activate(context: ExtensionContext): void {
                 const link = text.trim()
                 return parseVideoLink(link) ? [link] : null
             },
-            async publish(fence) {
-                const link = parseVideoLink(fence.body.find((line) => line.trim() !== '') ?? '')
-                if (!link) return null
-                const name = providerName(link.provider)
-                const known = await details(link)
-                const thumbnail = link.provider === 'youtube' ? `https://i.ytimg.com/vi/${link.id}/hqdefault.jpg` : known?.thumbnail
-                return {
-                    kind: 'link',
-                    href: link.page,
-                    text: known?.title ? `${known.title} (${name})` : `Watch on ${name}`,
-                    ...(thumbnail ? { image: { src: thumbnail, alt: known?.title ?? `${name} video` } } : {}),
-                }
-            },
+            publish: (fence) => videoCard(fence.body, true),
+            // A quote reaches YouTube or Vimeo only as a card in the document would: while the
+            // person lets cards fetch a picture and a title.
+            quote: (fence) => videoCard(fence.body, thumbnails()),
         },
     )
 

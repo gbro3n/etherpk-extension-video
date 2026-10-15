@@ -22,6 +22,8 @@ Published by `gbro3n`. This is not an extension from App Software, the makers of
   back.
 - **Published sites.** On a site you publish from EtherPK, a video is its picture and title linking
   to the video's page. The site holds no player.
+- **Backlinks.** Where a block that links to a page holds a video, the page's backlinks show a link
+  to the video's page, with its picture and title while **Show video thumbnails** is on.
 
 These links work: single YouTube videos (`watch?v=`, `youtu.be/`, `/shorts/`, `/live/` and
 `/embed/` links, on `www.`, `m.` and `music.youtube.com`) and Vimeo videos by number, including
@@ -102,7 +104,8 @@ address themselves, so they never reach either service.
 
 The extension is written against
 [`@appsoftwareltd/etherpk-extension-api`](https://www.npmjs.com/package/@appsoftwareltd/etherpk-extension-api).
-It uses `context.editor.registerFence` (the widget, the paste and the published card),
+It uses `context.editor.registerFence` (the widget, the paste, the published card and the link in
+backlinks),
 `context.dialogs.prompt`, `context.editor.insertBlock`, `context.embeds.frame` (the player, which
 the Client builds) and `context.settings`.
 

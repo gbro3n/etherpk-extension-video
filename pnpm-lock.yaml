@@ -9,8 +9,8 @@ importers:
   .:
     devDependencies:
       '@appsoftwareltd/etherpk-extension-api':
-        specifier: ^0.10.0
-        version: 0.10.0
+        specifier: ^0.12.0
+        version: 0.12.0
       '@playwright/test':
         specifier: ^1.59.1
         version: 1.64.0
@@ -29,8 +29,8 @@ importers:
 
 packages:
 
-  '@appsoftwareltd/etherpk-extension-api@0.10.0':
-    resolution: {integrity: sha512-jupQInwZnqeC5cdfQo/lMJtcjq8w41bBfrvW7CfhVIqw5DORE4BXocMHS9/azm44FlqJCopQZJSqH3aez6in2w==}
+  '@appsoftwareltd/etherpk-extension-api@0.12.0':
+    resolution: {integrity: sha512-PNHshpqT2GNS1sY8B5SJkWvWTQo8UebZqQfsQisU6DfWLZqrpWemnBOkq5TpOksLpj+GT5bCsrhYDZUZcrEH7w==}
 
   '@jridgewell/sourcemap-codec@1.6.0':
     resolution: {integrity: sha512-T7jf+5zgsZHwNJ4lvQ7/aezbyk0nNX+zJVWpmHA7VYsEx7a7qr5Rg5IbtJFqkgze5Y2sruq1RUY8Q837Od7iFw==}
@@ -467,7 +467,7 @@ packages:
 
 snapshots:
 
-  '@appsoftwareltd/etherpk-extension-api@0.10.0': {}
+  '@appsoftwareltd/etherpk-extension-api@0.12.0': {}
 
   '@jridgewell/sourcemap-codec@1.6.0': {}
 
