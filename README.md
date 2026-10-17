@@ -62,7 +62,7 @@ to see its text.
 ## Installing
 
 It is listed in the EtherPK Extension Directory. Install it in EtherPK from Settings and
-Extensions, then Extensions. It needs EtherPK 0.10.0 or later. To try a change before it is
+Extensions, then Extensions. It needs EtherPK 0.14.0 or later. To try a change before it is
 released, install it from a local directory, or side-load it in a development copy of the EtherPK
 Client (both below).
 
@@ -107,7 +107,9 @@ The extension is written against
 It uses `context.editor.registerFence` (the widget, the paste, the published card and the link in
 backlinks),
 `context.dialogs.prompt`, `context.editor.insertBlock`, `context.embeds.frame` (the player, which
-the Client builds) and `context.settings`.
+the Client builds) and `context.settings`. The link and buttons under a video use the Client's
+control classes (`gk-link`, `gk-button`), so they look like EtherPK's own in the light and dark
+themes.
 
 ## Licence
 
