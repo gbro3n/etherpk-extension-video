@@ -11,7 +11,8 @@
  * to the video's own page, which still works when a player refuses to play (a Vimeo video limited to
  * its owner's sites, a video taken down). Where the document can be written, the caption also offers
  * the link as text and deleting the video. A delete is one editor change, so the notice it shows
- * says how to undo it rather than asking first.
+ * says how to undo it rather than asking first. The caption's link and buttons carry the Client's
+ * control classes (`gk-link`, `gk-button`), so they are drawn as EtherPK's own.
  */
 import type { FenceContext, FenceInfo, FenceWidget, MountedFence } from '@appsoftwareltd/etherpk-extension-api'
 
@@ -109,7 +110,7 @@ export function createVideoWidget(services: VideoServices): FenceWidget {
                 if (!link) {
                     root.classList.add('video--message')
                     const text = element('p', 'video-message', "This isn't a link to a YouTube or Vimeo video.")
-                    const edit = element('button', 'video-button', 'Edit link')
+                    const edit = element('button', 'gk-button video-button', 'Edit link')
                     edit.type = 'button'
                     edit.addEventListener('click', () => context.editAsText())
                     root.append(text, edit)
@@ -159,17 +160,17 @@ export function createVideoWidget(services: VideoServices): FenceWidget {
             let captionWritable = false
             const drawCaption = (caption: HTMLElement, video: VideoLink, name: string) => {
                 captionWritable = context.writable
-                const open = element('a', 'video-open', video.short ? `Open the Short on ${name}` : `Open on ${name}`)
+                const open = element('a', 'gk-link', video.short ? `Open the Short on ${name}` : `Open on ${name}`)
                 open.href = video.page
                 open.target = '_blank'
                 open.rel = 'noopener'
                 caption.replaceChildren(open)
                 if (!captionWritable) return
-                const edit = element('button', 'video-action', 'Edit link')
+                const edit = element('button', 'gk-button gk-button--quiet gk-button--small video-action', 'Edit link')
                 edit.type = 'button'
                 edit.dataset.testid = 'video-edit-link'
                 edit.addEventListener('click', () => context.editAsText())
-                const remove = element('button', 'video-action', 'Delete')
+                const remove = element('button', 'gk-button gk-button--quiet gk-button--small video-action', 'Delete')
                 remove.type = 'button'
                 remove.dataset.testid = 'video-delete'
                 remove.setAttribute('aria-label', `Delete the ${name} video`)
